@@ -19,17 +19,20 @@
 //!
 //! [`git`]: https://git-scm.com/
 
-use clam::prelude::*;
+use std::io::prelude::*;
+use std::path::PathBuf;
+use std::sync::Arc;
+
 use eval_metrics::classification::RocCurve;
 use log::*;
 use serde_json::json;
 use serde_json::to_string;
 use simplelog::*;
-use std::io::prelude::*;
-use std::path::PathBuf;
-use std::sync::Arc;
 use structopt::clap::arg_enum;
 use structopt::StructOpt;
+
+use clam::prelude::*;
+use clam::utils::datasets::read_chaoda_data;
 
 // This is the central entry-point for defining command-line arguments.
 #[derive(Debug, StructOpt)]
@@ -201,8 +204,7 @@ fn chaoda(
     use_speed_threshold: bool,
 ) -> Result<String, String> {
     let read_labels = matches!(mode, ChaodaMode::Bench);
-    let (data, labels) =
-        clam::utils::read_chaoda_data(dataset_path, read_labels)?;
+    let (data, labels) = read_chaoda_data(dataset_path, read_labels, true)?;
     let data = Arc::new(data);
 
     let datasets: Vec<_> = metrics
@@ -210,12 +212,9 @@ fn chaoda(
         .map(|metric| {
             let metric =
                 metric_from_name(&metric.to_string().to_lowercase()).unwrap();
-            let dataset: Arc<dyn Dataset<f64, f64>> =
-                Arc::new(clam::dataset::RowMajor::<f64, f64>::new(
-                    Arc::clone(&data),
-                    metric,
-                    true,
-                ));
+            let dataset: Arc<dyn Dataset<f64, f64>> = Arc::new(
+                clam::RowMajor::<f64, f64>::new(Arc::clone(&data), metric, true),
+            );
             dataset
         })
         .collect();

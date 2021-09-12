@@ -42,7 +42,7 @@ impl<T: Number + 'static, U: Number + 'static> Chaoda<T, U> {
         });
         chaoda.manifolds = chaoda.create_manifolds(
             datasets,
-            max_tree_depth.unwrap_or(25),
+            max_tree_depth.unwrap_or(50),
             min_leaf_size,
         );
 
@@ -135,7 +135,7 @@ impl<T: Number + 'static, U: Number + 'static> Chaoda<T, U> {
             })
             .map(|(_, method, graph)| method(graph))
             .map(Array1::from_vec)
-            .filter(|scores| scores.std(0.) > 1e-1)
+            .filter(|scores| scores.std(0.) > 1e-3)
             .collect();
 
         if individual_scores.is_empty() {

@@ -9,6 +9,7 @@ use rayon::prelude::*;
 
 use crate::core::Subsumed;
 use crate::prelude::*;
+use crate::utils::helpers;
 
 type ClusterScores<T, U> = Vec<(Arc<Cluster<T, U>>, OrderedFloat<f64>)>;
 pub type IndividualAlgorithm<T, U> =
@@ -87,24 +88,8 @@ fn normalize<T: Number, U: Number>(
 ) -> ClusterScores<T, U> {
     let (clusters, scores): (Vec<_>, Vec<_>) = scores.into_iter().unzip();
     let scores: Vec<_> = scores.into_iter().map(f64::from).collect();
-
-    let num_scores = scores.len() as f64;
-
-    let mean = scores.iter().sum::<f64>() / num_scores;
-    let std_dev = 1e-8
-        + scores
-            .par_iter()
-            .map(|&score| score - mean)
-            .map(|difference| difference.powi(2))
-            .sum::<f64>()
-            .sqrt()
-            / num_scores;
-
-    let scores: Vec<_> = scores
-        .into_par_iter()
-        .map(|score| (score - mean) / (std_dev * 2_f64.sqrt()))
-        .map(statrs::function::erf::erf)
-        .map(|score| (1. + score) / 2.)
+    let scores: Vec<_> = helpers::normalize_1d(&scores)
+        .into_iter()
         .flat_map(OrderedFloat::from_f64)
         .collect();
 

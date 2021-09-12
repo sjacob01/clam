@@ -4,11 +4,12 @@ use ndarray::prelude::*;
 use ndarray_npy::read_npy;
 use ndarray_npy::ReadNpyError;
 
-use crate::prelude::*;
+use crate::utils::helpers;
+use crate::Number;
 
 // TODO: Implement function to download datasets from internet
 
-pub static CHAODA_DATASETS: &[&str] = &[
+pub static CHAODA_DATASETS: [&str; 25] = [
     "annthyroid",  // 0
     "arrhythmia",  // 1
     "breastw",     // 2
@@ -33,10 +34,11 @@ pub static CHAODA_DATASETS: &[&str] = &[
     "vowels",      // 21
     "wbc",         // 22
     "wine",        // 23
+    "dummy",
 ];
 
 // TODO: Discriminate by data type of downloaded data
-pub static ANN_DATASETS: &[(&str, &str)] = &[
+pub static ANN_DATASETS: [(&str, &str); 12] = [
     ("deep-image", "cosine"),       // 0
     ("fashion-mnist", "euclidean"), // 1
     ("gist", "euclidean"),          // 2
@@ -47,16 +49,16 @@ pub static ANN_DATASETS: &[(&str, &str)] = &[
     ("kosarak", "jaccard"),         // 7
     ("mnist", "euclidean"),         // 8
     ("nytimes", "cosine"),          // 9
-    ("sift", "euclidean"),          // 10,
+    ("sift", "euclidean"),          // 10
     ("lastfm", "cosine"),           // 11
 ];
 
-// TODO: Add sub-sampling and normalization
+// TODO: Add sub-sampling
 
 pub type DataLabels<T, U> = (Vec<Vec<T>>, Vec<U>);
 pub type TrainTest<T> = (Vec<Vec<T>>, Vec<Vec<T>>);
 
-pub fn read_test_data() -> DataLabels<f64, u8> {
+pub fn read_test_data(normalize: bool) -> DataLabels<f64, u8> {
     let mut data_dir: PathBuf = std::env::current_dir().unwrap();
     data_dir.push("data");
 
@@ -64,7 +66,12 @@ pub fn read_test_data() -> DataLabels<f64, u8> {
     data_path.push("annthyroid.npy");
     data_dir.push("annthyroid_labels.npy");
 
-    let data: Array2<f64> = read_npy(data_path).unwrap();
+    let data: Array2<f64> = if normalize {
+        helpers::normalize_2d(read_npy(data_path).unwrap(), false)
+    } else {
+        read_npy(data_path).unwrap()
+    };
+
     let data = data.outer_iter().map(|row| row.to_vec()).collect();
 
     let labels: Array1<u8> = read_npy(data_dir).unwrap();
@@ -72,9 +79,17 @@ pub fn read_test_data() -> DataLabels<f64, u8> {
     (data, labels.to_vec())
 }
 
+fn print_means(data: &Array2<f64>) {
+    data.axis_iter(Axis(1))
+        .inspect(|column| println!("{:?}", column.to_vec().iter().map(|val| format!("{:.4}", val)).collect::<Vec<_>>()))
+        .count();
+    println!();
+}
+
 pub fn read_chaoda_data(
     path: PathBuf,
     read_labels: bool,
+    normalize: bool,
 ) -> Result<DataLabels<f64, bool>, String> {
     let mut data_path = path.clone();
     data_path.set_extension("npy");
@@ -86,6 +101,19 @@ pub fn read_chaoda_data(
             error
         )
     })?;
+
+    println!("before normalization");
+    print_means(&data);
+
+    let data = if normalize {
+        helpers::normalize_2d(data, false)
+    } else {
+        data
+    };
+
+    println!("after normalization");
+    print_means(&data);
+
     let data: Vec<_> = data.outer_iter().map(|row| row.to_vec()).collect();
 
     let labels = if read_labels {
@@ -128,30 +156,4 @@ pub fn read_ann_data<T: Number, U: Number>(
     let test = test.outer_iter().map(|row| row.to_vec()).collect();
 
     Ok((train, test))
-}
-
-pub fn argmin<T: Number>(values: &[T]) -> (Index, T) {
-    values
-        .iter()
-        .enumerate()
-        .fold((0, values[0]), |(i_min, v_min), (i, &v)| {
-            if v < v_min {
-                (i, v)
-            } else {
-                (i_min, v_min)
-            }
-        })
-}
-
-pub fn argmax<T: Number>(values: &[T]) -> (Index, T) {
-    values
-        .iter()
-        .enumerate()
-        .fold((0, values[0]), |(i_max, v_max), (i, &v)| {
-            if v > v_max {
-                (i, v)
-            } else {
-                (i_max, v_max)
-            }
-        })
 }

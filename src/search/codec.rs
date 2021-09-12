@@ -5,8 +5,9 @@ use std::sync::Arc;
 
 use rayon::prelude::*;
 
-use crate::dataset::RowMajor;
-use crate::{prelude::*, Cakes};
+use crate::prelude::*;
+use crate::Cakes;
+use crate::RowMajor;
 
 /// A `Dataset` that also allows for compression and decompression.
 /// Instances in a `CompressibleDataset` can be encoded in terms of each other to
@@ -215,9 +216,9 @@ impl<T: Number, U: Number> Codec<T, U> {
 mod tests {
     use std::sync::Arc;
 
-    use crate::dataset::RowMajor;
     use crate::metric_from_name;
     use crate::CompressibleDataset;
+    use crate::RowMajor;
 
     #[test]
     fn test_codec() {

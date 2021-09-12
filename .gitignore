@@ -155,9 +155,15 @@ pyclam/explorations.py
 
 # local data files and folders
 data/arrhythmia*
+data/backdoor*
 data/breastw*
 data/cardio*
+data/campaign*
+data/celeba*
+data/census*
 data/cover*
+data/donors*
+data/fraud*
 data/glass*
 data/http*
 data/ionosphere*

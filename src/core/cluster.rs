@@ -14,11 +14,11 @@ use rayon::prelude::*;
 
 use crate::core::Ratios;
 use crate::prelude::*;
-use crate::utils::argmax;
-use crate::utils::argmin;
+use crate::utils::helpers::argmax;
+use crate::utils::helpers::argmin;
 use criteria::PartitionCriterion;
 
-const SUB_SAMPLE_LIMIT: usize = 100;
+const SUB_SAMPLE_LIMIT: usize = 10_000;
 
 /// A 2-tuple of `Arc<Cluster>` representing the two child `Clusters`
 /// formed when a `Cluster` is partitioned.
@@ -460,8 +460,8 @@ impl<T: Number, U: Number> Cluster<T, U> {
 mod tests {
     use std::sync::Arc;
 
-    use crate::dataset::RowMajor;
     use crate::prelude::*;
+    use crate::RowMajor;
 
     #[test]
     fn test_cluster() {

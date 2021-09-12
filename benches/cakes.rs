@@ -1,13 +1,13 @@
-extern crate clam;
-
 use std::sync::Arc;
 
-use criterion::{criterion_group, criterion_main, Criterion};
+use criterion::criterion_group;
+use criterion::criterion_main;
+use criterion::Criterion;
 
-use clam::dataset::RowMajor;
 use clam::prelude::*;
 use clam::utils;
 use clam::Cakes;
+use clam::RowMajor;
 
 #[allow(dead_code)]
 fn cakes_apogee(c: &mut Criterion) {
@@ -15,7 +15,8 @@ fn cakes_apogee(c: &mut Criterion) {
     group.sample_size(30);
 
     let (name, metric) = ("apogee", metric_from_name("euclidean").unwrap());
-    let (train, test) = utils::read_ann_data::<f32, f32>(name).unwrap();
+    let (train, test) =
+        utils::datasets::read_ann_data::<f32, f32>(name).unwrap();
     let train_dataset: Arc<dyn Dataset<f32, f32>> =
         Arc::new(RowMajor::new(Arc::new(train), Arc::clone(&metric), true));
     let test_dataset: Arc<dyn Dataset<f32, f32>> =
@@ -47,13 +48,14 @@ fn cakes_ann_benchmarks(c: &mut Criterion) {
     let mut group = c.benchmark_group("cakes_ann");
     group.sample_size(30);
 
-    for (name, metric) in utils::ANN_DATASETS.iter() {
+    for (name, metric) in utils::datasets::ANN_DATASETS.iter() {
         if !name.eq(&"fashion-mnist") {
             continue;
         }
 
         let metric = metric_from_name(metric).unwrap();
-        let (train, test) = utils::read_ann_data::<f32, f32>(name).unwrap();
+        let (train, test) =
+            utils::datasets::read_ann_data::<f32, f32>(name).unwrap();
         let train_dataset: Arc<dyn Dataset<f32, f32>> =
             Arc::new(RowMajor::<f32, f32>::new(
                 Arc::new(train),

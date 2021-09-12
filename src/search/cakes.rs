@@ -6,6 +6,7 @@ use bitvec::prelude::*;
 use rayon::prelude::*;
 
 use crate::prelude::*;
+use crate::utils::helpers::argmax;
 
 /// A Vec of Clusters that overlap with the query ball.
 type ClusterHits<T, U> = Vec<Arc<Cluster<T, U>>>;
@@ -181,7 +182,7 @@ impl<T: 'static + Number, U: 'static + Number> Cakes<T, U> {
                         .par_iter()
                         .map(|inner| inner[i].unwrap_or_else(U::zero))
                         .collect();
-                    crate::utils::argmax(&temp)
+                    argmax(&temp)
                 })
                 .collect();
 
@@ -467,9 +468,9 @@ pub fn restack_tree<T: Number, U: Number>(
 mod tests {
     use std::sync::Arc;
 
-    use crate::dataset::RowMajor;
     use crate::prelude::*;
-    use crate::utils::read_test_data;
+    use crate::utils::datasets::read_test_data;
+    use crate::RowMajor;
 
     use super::Cakes;
 
@@ -500,7 +501,7 @@ mod tests {
 
     #[test]
     fn test_search_large() {
-        let (data, _) = read_test_data();
+        let (data, _) = read_test_data(true);
         let metric = metric_from_name("euclidean").unwrap();
         let dataset: Arc<dyn Dataset<_, f64>> =
             Arc::new(RowMajor::new(Arc::new(data), metric, true));

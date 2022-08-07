@@ -6,7 +6,7 @@ use clam::prelude::*;
 mod h5data;
 mod h5number;
 mod h5space;
-mod report;
+mod reports;
 
 pub fn open_hdf5_file(name: &str) -> hdf5::Result<hdf5::File> {
     let mut data_dir = std::env::current_dir().unwrap();
@@ -108,6 +108,12 @@ where
     let cakes = cakes.build(&partition_criteria);
     let build_time = start.elapsed().as_secs_f64();
 
+    log::info!("Writing tree report on {}-{} data ...", data_name, metric_name);
+    reports::report_tree(&output_dir.join("trees"), cakes.root(), build_time)?;
+    if build_time > 0. {
+        return Ok(());
+    }
+
     log::info!("Starting search on {}-{} data ...", data_name, metric_name);
 
     let (hits, search_times): (Vec<_>, Vec<_>) = queries_radii
@@ -163,7 +169,7 @@ where
 
     let output_sizes = hits.iter().map(|row| row.len()).collect();
 
-    let report = report::Report {
+    let report = reports::RnnReport {
         data_name,
         metric_name,
         num_queries: queries_radii.len(),

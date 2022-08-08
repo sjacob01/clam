@@ -1,11 +1,43 @@
 import pathlib
+import typing
 
 import numpy
 import pydantic
 from matplotlib import pyplot
 
 
-class Report(pydantic.BaseModel):
+class TreeReport(pydantic.BaseModel):
+    data_name: str
+    metric_name: str
+    cardinality: int
+    dimensionality: int
+    root_name: str
+    max_depth: int
+    build_time: float
+
+
+class ClusterReport(pydantic.BaseModel):
+    cardinality: int
+    indices: typing.Union[list[int], None]
+    name: str
+    arg_center: int
+    arg_radius: int
+    radius: float
+    lfd: float
+    left_child: typing.Union[str, None]
+    right_child: typing.Union[str, None]
+    # ratios: list[float]
+
+
+def load_tree(base_path: pathlib.Path) -> list[ClusterReport]:
+    return [
+        ClusterReport.parse_file(path)
+        for path in base_path.iterdir()
+        if path.is_file() and 'tree' not in path.name
+    ]
+
+
+class RnnReport(pydantic.BaseModel):
     data_name: str
     metric_name: str
     num_queries: int

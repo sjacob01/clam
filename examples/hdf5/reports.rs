@@ -7,9 +7,42 @@ use serde::{Deserialize, Serialize};
 struct TreeReport {
     data_name: String,
     metric_name: String,
+    cardinality: usize,
+    dimensionality: usize,
     root_name: String,
     max_depth: usize,
     build_time: f64,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+struct ClusterReport {
+    cardinality: usize,
+    indices: Option<Vec<usize>>,
+    name: String,
+    arg_center: usize,
+    arg_radius: usize,
+    radius: f64,
+    lfd: f64,
+    left_child: Option<String>,
+    right_child: Option<String>,
+    // ratios: [f64; 6],
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct RnnReport<'a> {
+    pub data_name: &'a str,
+    pub metric_name: &'a str,
+    pub num_queries: usize,
+    pub num_runs: usize,
+    pub cardinality: usize,
+    pub dimensionality: usize,
+    pub tree_depth: usize,
+    pub build_time: f64,
+    pub root_radius: f64,
+    pub search_radii: Vec<f64>,
+    pub search_times: Vec<Vec<f64>>,
+    pub output_sizes: Vec<usize>,
+    pub recalls: Vec<f64>,
 }
 
 pub fn report_tree<'a, T, U>(dir: &std::path::Path, root: &'a clam::Cluster<'a, T, U>, build_time: f64) -> Result<(), String>
@@ -25,6 +58,8 @@ where
         let report = TreeReport {
             data_name: root.space().data().name(),
             metric_name: root.space().metric().name(),
+            cardinality: root.space().data().cardinality(),
+            dimensionality: root.space().data().dimensionality(),
             root_name: root.name_str(),
             max_depth: root.max_leaf_depth(),
             build_time,
@@ -51,20 +86,6 @@ where
     }
 }
 
-#[derive(Debug, Serialize, Deserialize)]
-struct ClusterReport {
-    cardinality: usize,
-    indices: Option<Vec<usize>>,
-    name: String,
-    arg_center: usize,
-    arg_radius: usize,
-    radius: f64,
-    lfd: f64,
-    left_child: Option<String>,
-    right_child: Option<String>,
-    // ratios: [f64; 6],
-}
-
 fn _report_tree<'a, T, U>(dir: &std::path::Path, cluster: &'a clam::Cluster<'a, T, U>) -> Result<(), String>
 where
     T: clam::Number,
@@ -83,16 +104,6 @@ where
             right_child: None,
         }
     } else {
-        // let (l, r) = rayon::join(
-        //     || _report_tree(dir, cluster.left_child()),
-        //     || _report_tree(dir, cluster.left_child()),
-        // );
-        // _report_tree(dir, cluster.left_child())?;
-        // _report_tree(dir, cluster.left_child())?;
-
-        // _report_tree(dir, cluster.left_child())?;
-        // _report_tree(dir, cluster.left_child())?;
-
         ClusterReport {
             cardinality: cluster.cardinality(),
             indices: None,
@@ -113,23 +124,6 @@ where
     let mut file = std::fs::File::create(&path)
         .map_err(|reason| format!("Could not create/open file {:?} because {}", path, reason))?;
     write!(&mut file, "{}", report).map_err(|reason| format!("Could not write report to {:?} because {}.", path, reason))
-}
-
-#[derive(Debug, Serialize, Deserialize)]
-pub struct RnnReport<'a> {
-    pub data_name: &'a str,
-    pub metric_name: &'a str,
-    pub num_queries: usize,
-    pub num_runs: usize,
-    pub cardinality: usize,
-    pub dimensionality: usize,
-    pub tree_depth: usize,
-    pub build_time: f64,
-    pub root_radius: f64,
-    pub search_radii: Vec<f64>,
-    pub search_times: Vec<Vec<f64>>,
-    pub output_sizes: Vec<usize>,
-    pub recalls: Vec<f64>,
 }
 
 impl<'a> RnnReport<'a> {

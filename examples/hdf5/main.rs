@@ -203,7 +203,7 @@ fn main() -> Result<(), String> {
     env_logger::Builder::new().parse_filters("info").init();
 
     let results = [
-        search::<f32, f32, i32, f32, f32>("deep-image", "cosine", 100),
+        // search::<f32, f32, i32, f32, f32>("deep-image", "cosine", 100),
         search::<f32, f32, i32, f32, f32>("fashion-mnist", "euclidean", 100),
         search::<f32, f32, i32, f32, f32>("gist", "euclidean", 100),
         search::<f32, f32, i32, f32, f32>("glove-25", "cosine", 100),

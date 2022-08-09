@@ -3,9 +3,12 @@ import math
 import pathlib
 import time
 
+import numpy
+import sklearn
+
 from . import anomaly_data
 import pyclam
-import sklearn
+
 
 logger = pyclam.utils.helpers.make_logger(__name__)
 
@@ -14,11 +17,14 @@ def run_one_dataset(
         data_dir: pathlib.Path,
         name: str,
         metrics: list[pyclam.Metric],
-        output_dir: pathlib.Path,
+        output_dir: pathlib.Path,    
 ):
-    raw_data = anomaly_data.AnomalyData.load(data_dir, name)
+    # raw_data = anomaly_data.AnomalyData.load(data_dir, name)
+    data = numpy.load(data_dir.joinpath('layer_1_results.npy'))
+    labels = numpy.load(data_dir.joinpath('layer_1_result_labels.npy'))
+    
     dataset = pyclam.dataset.TabularDataset(
-        data=raw_data.normalized_features,
+        data=data,
         name=name,
     )
 
@@ -45,7 +51,7 @@ def run_one_dataset(
     predicted_scores = chaoda.fit_predict()
     time_taken = time.perf_counter() - start
 
-    roc_score = sklearn.metrics.roc_auc_score(raw_data.scores, predicted_scores)
+    roc_score = sklearn.metrics.roc_auc_score(labels, predicted_scores)
 
     logger.info(f'Dataset {name} scored {roc_score:.3f} in {time_taken:.2e} seconds.')
 
@@ -86,9 +92,10 @@ def run_inference(data_dir: pathlib.Path, output_dir: pathlib.Path):
         pyclam.metric.ScipyMetric('cityblock'),
     ]
 
-    for name in anomaly_data.INFERENCE_SET:
-        logger.info(f'Staring CHAODA inference on {name} ...')
-        run_one_dataset(data_dir, name, metrics, output_dir)
+    # for name in anomaly_data.INFERENCE_SET:
+    name ='layer_1_mnist'
+    logger.info(f'Staring CHAODA inference on {name} ...')
+    run_one_dataset(data_dir, name, metrics, output_dir)
 
     compile_results(output_dir)
     return
